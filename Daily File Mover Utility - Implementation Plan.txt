@@ -1,0 +1,79 @@
+﻿Daily File Mover Utility - Implementation Plan
+Technical specification and architectural guide for building a reliable background file management utility on modern Android devices.
+1. Executive Summary & Objective
+Build a lightweight, sideloaded Android utility app that automatically and reliably moves files from a designated source directory to a target directory at an exact scheduled time every day. The architecture prioritizes execution reliability in deep Doze modes, high file IO performance, and minimal background resource consumption.
+2. Key Constraints & Architecture Decisions
+* Distribution Model: Sideloaded / personal utility. Bypasses restrictive Google Play Store policies regarding broad storage permissions and background scheduling constraints.
+* Storage Access Strategy: Full storage access using MANAGE_EXTERNAL_STORAGE. Enables direct java.io.File operations, rapid atomic renames (File.renameTo), and stream fallback without the overhead or directory limitations imposed by the Storage Access Framework (SAF).
+* Scheduling Mechanism: AlarmManager utilizing setExactAndAllowWhileIdle() to ensure execution at exact target timestamps even in deep Doze mode. Paired with a BroadcastReceiver using goAsync() (and an optional ForegroundService for large bulk transfers). Exact alarms are automatically re-armed after each execution cycle and upon system startup (RECEIVE_BOOT_COMPLETED).
+3. Required Permissions
+The following permissions must be explicitly declared in AndroidManifest.xml to grant full system access for automated execution and raw filesystem operations:
+
+
+Permission Name
+	Category
+	Primary Purpose
+	android.permission.MANAGE_EXTERNAL_STORAGE
+	Special Access
+	Grants unrestricted local storage read and write capabilities across public directories.
+	android.permission.SCHEDULE_EXACT_ALARM
+	Special Access
+	Ensures precise scheduling trigger times across Android 12+ (API level 31+).
+	android.permission.RECEIVE_BOOT_COMPLETED
+	Normal
+	Allows re-arming scheduled daily alarms automatically upon device restart.
+	android.permission.WAKE_LOCK
+	Normal
+	Prevents CPU sleep cycles during active file operations.
+	android.permission.FOREGROUND_SERVICE
+	Normal
+	Enables high-priority background execution for extended processing tasks.
+	android.permission.FOREGROUND_SERVICE_DATA_SYNC
+	Special / API 34+
+	Fulfills Android 14 requirements for data sync foreground service type classification.
+	4. Component Architecture & Workflow
+UI & Settings Configuration
+Simple, functional management screen designed to:
+
+
+* Check and request the MANAGE_EXTERNAL_STORAGE system permission via Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION.
+* Configure and persist source and target directory paths.
+* Select the exact target daily execution time (e.g., 03:00 AM).
+AlarmScheduler (Singleton / Object)
+* Calculates the exact epoch millisecond offset to the next target daily execution time.
+* Configures a PendingIntent targeting FileMoverReceiver.
+* Enqueues the job via AlarmManager.setExactAndAllowWhileIdle().
+FileMoverReceiver (BroadcastReceiver)
+* Handles system intents ACTION_DAILY_MOVE and android.intent.action.BOOT_COMPLETED.
+* On Boot: Immediately recalculates and reschedules the daily alarm.
+* On Alarm Trigger:
+   1. Acquires an asynchronous execution context using goAsync().
+   2. Spawns background execution on Dispatchers.IO.
+   3. Guarantees alarm re-scheduling in a finally block to prevent schedule drift.
+   4. Invokes pendingResult.finish() once operations complete.
+File Mover Execution Engine
+1. Iterates over all accessible files within the target source directory.
+2. Attempts File.renameTo() for zero-copy, atomic moves when directories share the same filesystem mount point.
+3. Falls back to a buffered byte stream copy (FileInputStream / FileOutputStream) if atomic rename is unsupported, followed by source file deletion upon verified copy completion.
+4. Cleans up partial writes if an IO error occurs mid-transfer.
+5. Device Configuration & Operational Prerequisites
+To ensure uninterrupted operation on aggressive OEM Android builds, the following settings must be configured manually on the target device:
+
+
+* Battery Optimization: Set the application's battery usage mode to Unrestricted under App Info > Battery.
+* OEM Background Management: Whitelist the app within proprietary OEM battery-saver and background management applications (e.g., Xiaomi MIUI/HyperOS, Samsung One UI, ColorOS).
+* Alarm Permissions: Verify that the Alarms & reminders toggle remains active in System Settings.
+6. Implementation Checklist
+[ ] Step 1: Scaffold Android project using Kotlin (minSdk 26, targetSdk 34).
+
+
+[ ] Step 2: Configure AndroidManifest.xml with required permissions, service declarations, and boot receiver.
+
+
+[ ] Step 3: Implement AlarmScheduler singleton to manage precise AlarmManager enqueue/re-arm cycles.
+
+
+[ ] Step 4: Implement FileMoverReceiver alongside the core file-moving helper functions.
+
+
+[ ] Step 5: Validate exact alarm triggering via ADB (`adb shell am broadcast` / system time modification) and test atomic file operations.
