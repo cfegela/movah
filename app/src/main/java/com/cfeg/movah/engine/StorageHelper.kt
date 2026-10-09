@@ -7,11 +7,7 @@ import android.os.Build
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.Settings
-import java.io.File
-
 object StorageHelper {
-
-    data class ShortcutFolder(val label: String, val path: String)
 
     fun hasManageStoragePermission(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -36,18 +32,6 @@ object StorageHelper {
                 context.startActivity(intent)
             }
         }
-    }
-
-    fun getCommonShortcuts(): List<ShortcutFolder> {
-        val root = Environment.getExternalStorageDirectory()
-        return listOf(
-            ShortcutFolder("Downloads", File(root, Environment.DIRECTORY_DOWNLOADS).absolutePath),
-            ShortcutFolder("DCIM", File(root, Environment.DIRECTORY_DCIM).absolutePath),
-            ShortcutFolder("Pictures", File(root, Environment.DIRECTORY_PICTURES).absolutePath),
-            ShortcutFolder("Documents", File(root, Environment.DIRECTORY_DOCUMENTS).absolutePath),
-            ShortcutFolder("Movies", File(root, Environment.DIRECTORY_MOVIES).absolutePath),
-            ShortcutFolder("Music", File(root, Environment.DIRECTORY_MUSIC).absolutePath)
-        )
     }
 
     fun resolvePathFromTreeUri(treeUri: Uri): String? {

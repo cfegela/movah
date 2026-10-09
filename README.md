@@ -1,4 +1,4 @@
-# Movah
+# <img src="assets/icon.png" width="40" height="40" alt="Movah Icon" valign="middle"> Movah
 
 A lightweight, reliable Android utility app that moves files from one directory to another on a set schedule. Built with **Kotlin**, **Jetpack Compose (Material 3)**, **Room Database**, **AlarmManager**, and **Foreground Services**.
 
@@ -11,7 +11,7 @@ A lightweight, reliable Android utility app that moves files from one directory 
 * **Overwriting & Atomic File Moves**: Moves all items located in the root of the source directory, automatically overwriting files of the same name in the destination. Utilizes zero-copy atomic renames (`File.renameTo`) with resilient buffered byte stream fallbacks and error cleanup.
 * **Instant "Run Now" Testing**: Test any scheduled move immediately with the tap of a button without waiting for the scheduled alarm time.
 * **Execution & Activity Logs**: Comprehensive persistent history tracking every move execution with status badges (`SUCCESS`, `PARTIAL`, `FAILED`), total items moved, timestamp, and detailed error reports. Includes a quick "Clear Logs" action.
-* **Folder Picker & Quick Shortcuts**: Select directories using the Android Storage Access Framework folder picker, or quickly tap shortcut chips for common directories (`Downloads`, `DCIM`, `Pictures`, `Documents`).
+* **Folder Picker**: Select directories using the Android Storage Access Framework folder picker with the folder icon button.
 * **Deep Doze Reliability**: Employs `AlarmManager.setExactAndAllowWhileIdle()` to guarantee execution even when the device enters deep Doze mode.
 * **Reboot Rescheduling**: Re-arms all enabled alarms automatically on system startup (`BOOT_COMPLETED`) or system time changes.
 * **Data-Sync Foreground Service & WakeLock**: Executes transfers within an Android 14+ compliant `dataSync` Foreground Service holding a CPU `WakeLock` to prevent OEM process killing during bulk transfers.
@@ -30,7 +30,7 @@ com.cfeg.movah
 │   └── MovahDatabase.kt      # Room database singleton
 ├── engine/
 │   ├── FileMoverEngine.kt    # Atomic file rename, overwrite, stream fallback & error handling
-│   └── StorageHelper.kt      # Permissions, path resolution, and common folder shortcuts
+│   └── StorageHelper.kt      # Permissions and path resolution
 ├── scheduler/
 │   ├── AlarmScheduler.kt     # Exact AlarmManager registration, cancellation & reboot re-arm
 │   ├── FileMoverReceiver.kt  # BroadcastReceiver for alarm triggers, boot, and time shifts
@@ -41,7 +41,7 @@ com.cfeg.movah
     │   └── MainViewModel.kt  # StateFlow management for tasks, logs, and triggers
     ├── screens/
     │   ├── TasksScreen.kt    # List of scheduled moves, permission banners, Run Now & controls
-    │   ├── TaskEditDialog.kt # Folder pickers, shortcuts, and time picker modal
+    │   ├── TaskEditDialog.kt # Folder pickers and time picker modal
     │   └── LogsScreen.kt     # Activity history list with status badges and clear action
     └── theme/
         ├── Color.kt

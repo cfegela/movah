@@ -4,13 +4,12 @@ import android.app.TimePickerDialog
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FolderOpen
-import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -52,8 +51,6 @@ fun TaskEditDialog(
             }
         }
     }
-
-    val shortcuts = remember { StorageHelper.getCommonShortcuts() }
 
     // Time Picker Dialog
     val timePickerDialog = remember {
@@ -101,74 +98,38 @@ fun TaskEditDialog(
                 )
 
                 // Source Path
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    OutlinedTextField(
-                        value = sourcePath,
-                        onValueChange = { sourcePath = it },
-                        label = { Text("Source Directory") },
-                        placeholder = { Text("/storage/emulated/0/...") },
-                        modifier = Modifier.fillMaxWidth(),
-                        trailingIcon = {
-                            IconButton(onClick = {
-                                selectingTargetForSource = true
-                                folderPicker.launch(null)
-                            }) {
-                                Icon(Icons.Default.FolderOpen, contentDescription = "Pick source folder")
-                            }
-                        }
-                    )
-
-                    // Quick shortcut chips
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        shortcuts.take(4).forEach { shortcut ->
-                            FilterChip(
-                                selected = sourcePath == shortcut.path,
-                                onClick = { sourcePath = shortcut.path },
-                                label = { Text(shortcut.label, style = MaterialTheme.typography.labelSmall) }
-                            )
+                OutlinedTextField(
+                    value = sourcePath,
+                    onValueChange = { sourcePath = it },
+                    label = { Text("Source Directory") },
+                    placeholder = { Text("/storage/emulated/0/...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            selectingTargetForSource = true
+                            folderPicker.launch(null)
+                        }) {
+                            Icon(Icons.Default.FolderOpen, contentDescription = "Pick source folder")
                         }
                     }
-                }
+                )
 
                 // Target Path
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    OutlinedTextField(
-                        value = targetPath,
-                        onValueChange = { targetPath = it },
-                        label = { Text("Target Directory") },
-                        placeholder = { Text("/storage/emulated/0/...") },
-                        modifier = Modifier.fillMaxWidth(),
-                        trailingIcon = {
-                            IconButton(onClick = {
-                                selectingTargetForSource = false
-                                folderPicker.launch(null)
-                            }) {
-                                Icon(Icons.Default.FolderOpen, contentDescription = "Pick target folder")
-                            }
-                        }
-                    )
-
-                    // Quick shortcut chips
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        shortcuts.take(4).forEach { shortcut ->
-                            FilterChip(
-                                selected = targetPath == shortcut.path,
-                                onClick = { targetPath = shortcut.path },
-                                label = { Text(shortcut.label, style = MaterialTheme.typography.labelSmall) }
-                            )
+                OutlinedTextField(
+                    value = targetPath,
+                    onValueChange = { targetPath = it },
+                    label = { Text("Target Directory") },
+                    placeholder = { Text("/storage/emulated/0/...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            selectingTargetForSource = false
+                            folderPicker.launch(null)
+                        }) {
+                            Icon(Icons.Default.FolderOpen, contentDescription = "Pick target folder")
                         }
                     }
-                }
+                )
 
                 // Scheduled Time
                 Row(
@@ -184,10 +145,8 @@ fun TaskEditDialog(
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
-                    OutlinedButton(onClick = { timePickerDialog.show() }) {
-                        Icon(Icons.Default.Schedule, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Set Time")
+                    IconButton(onClick = { timePickerDialog.show() }) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit time")
                     }
                 }
 
