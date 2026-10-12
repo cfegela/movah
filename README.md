@@ -41,7 +41,7 @@ com.cfeg.movah
     │   └── MainViewModel.kt  # StateFlow management for tasks, logs, and triggers
     ├── screens/
     │   ├── TasksScreen.kt    # List of scheduled moves, permission banners, Run Now & controls
-    │   ├── TaskEditDialog.kt # Folder pickers and time picker modal
+    │   ├── TaskEditScreen.kt # Folder pickers, time picker, and task configuration screen
     │   └── LogsScreen.kt     # Activity history list with status badges and clear action
     └── theme/
         ├── Color.kt

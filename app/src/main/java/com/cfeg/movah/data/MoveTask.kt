@@ -13,6 +13,7 @@ data class MoveTask(
     val hour: Int,
     val minute: Int,
     val isEnabled: Boolean = true,
+    val minAgeDays: Int = 0,
     val lastRunTimestamp: Long? = null,
     val lastRunStatus: String? = null,
     val lastRunCount: Int? = null

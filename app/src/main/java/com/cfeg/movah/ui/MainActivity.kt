@@ -22,10 +22,15 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.cfeg.movah.data.MoveTask
 import com.cfeg.movah.engine.StorageHelper
 import com.cfeg.movah.ui.screens.LogsScreen
-import com.cfeg.movah.ui.screens.TaskEditDialog
+import com.cfeg.movah.ui.screens.TaskEditScreen
 import com.cfeg.movah.ui.screens.TasksScreen
 import com.cfeg.movah.ui.theme.MovahTheme
 import com.cfeg.movah.ui.viewmodel.MainViewModel
+
+private sealed interface AppScreen {
+    data object Main : AppScreen
+    data class EditTask(val task: MoveTask? = null) : AppScreen
+}
 
 class MainActivity : ComponentActivity() {
 
@@ -37,9 +42,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MovahTheme {
+                var currentScreen by remember { mutableStateOf<AppScreen>(AppScreen.Main) }
                 var selectedTab by remember { mutableIntStateOf(0) }
-                var showEditDialog by remember { mutableStateOf(false) }
-                var taskToEdit by remember { mutableStateOf<MoveTask?>(null) }
                 var hasStoragePermission by remember {
                     mutableStateOf(StorageHelper.hasManageStoragePermission(this))
                 }
@@ -72,89 +76,87 @@ class MainActivity : ComponentActivity() {
                 val tasks by viewModel.tasks.collectAsState()
                 val logs by viewModel.logs.collectAsState()
 
-                Scaffold(
-                    topBar = {
-                        TopAppBar(
-                            title = {
-                                Text(
-                                    if (selectedTab == 0) "Scheduled Moves" else "Activity Logs",
-                                    style = MaterialTheme.typography.titleLarge
-                                )
-                            },
-                            colors = TopAppBarDefaults.topAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.surface
-                            )
-                        )
-                    },
-                    bottomBar = {
-                        NavigationBar {
-                            NavigationBarItem(
-                                selected = selectedTab == 0,
-                                onClick = { selectedTab = 0 },
-                                icon = { Icon(Icons.Default.Schedule, contentDescription = "Schedules") },
-                                label = { Text("Schedules") }
-                            )
-                            NavigationBarItem(
-                                selected = selectedTab == 1,
-                                onClick = { selectedTab = 1 },
-                                icon = { Icon(Icons.Default.History, contentDescription = "Logs") },
-                                label = { Text("Logs") }
-                            )
-                        }
-                    }
-                ) { innerPadding ->
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        when (selectedTab) {
-                            0 -> TasksScreen(
-                                tasks = tasks,
-                                hasStoragePermission = hasStoragePermission,
-                                onGrantStoragePermission = {
-                                    StorageHelper.openManageStorageSettings(this@MainActivity)
-                                },
-                                onAddTask = {
-                                    taskToEdit = null
-                                    showEditDialog = true
-                                },
-                                onEditTask = { task ->
-                                    taskToEdit = task
-                                    showEditDialog = true
-                                },
-                                onDeleteTask = { task ->
-                                    viewModel.deleteTask(task)
-                                },
-                                onToggleTask = { task, enabled ->
-                                    viewModel.toggleTask(task, enabled)
-                                },
-                                onRunTaskNow = { task ->
-                                    viewModel.runTaskNow(task)
-                                }
-                            )
-
-                            1 -> LogsScreen(
-                                logs = logs,
-                                onClearLogs = { viewModel.clearLogs() }
-                            )
-                        }
-                    }
-
-                    if (showEditDialog) {
-                        TaskEditDialog(
-                            taskToEdit = taskToEdit,
-                            onDismiss = {
-                                showEditDialog = false
-                                taskToEdit = null
-                            },
+                when (val screen = currentScreen) {
+                    is AppScreen.EditTask -> {
+                        TaskEditScreen(
+                            taskToEdit = screen.task,
+                            onBack = { currentScreen = AppScreen.Main },
                             onSave = { task ->
                                 viewModel.saveTask(task)
-                                showEditDialog = false
-                                taskToEdit = null
+                                currentScreen = AppScreen.Main
                             }
                         )
+                    }
+
+                    is AppScreen.Main -> {
+                        Scaffold(
+                            topBar = {
+                                TopAppBar(
+                                    title = {
+                                        Text(
+                                            if (selectedTab == 0) "Scheduled Moves" else "Activity Logs",
+                                            style = MaterialTheme.typography.titleLarge
+                                        )
+                                    },
+                                    colors = TopAppBarDefaults.topAppBarColors(
+                                        containerColor = MaterialTheme.colorScheme.surface
+                                    )
+                                )
+                            },
+                            bottomBar = {
+                                NavigationBar {
+                                    NavigationBarItem(
+                                        selected = selectedTab == 0,
+                                        onClick = { selectedTab = 0 },
+                                        icon = { Icon(Icons.Default.Schedule, contentDescription = "Schedules") },
+                                        label = { Text("Schedules") }
+                                    )
+                                    NavigationBarItem(
+                                        selected = selectedTab == 1,
+                                        onClick = { selectedTab = 1 },
+                                        icon = { Icon(Icons.Default.History, contentDescription = "Logs") },
+                                        label = { Text("Logs") }
+                                    )
+                                }
+                            }
+                        ) { innerPadding ->
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(innerPadding),
+                                color = MaterialTheme.colorScheme.background
+                            ) {
+                                when (selectedTab) {
+                                    0 -> TasksScreen(
+                                        tasks = tasks,
+                                        hasStoragePermission = hasStoragePermission,
+                                        onGrantStoragePermission = {
+                                            StorageHelper.openManageStorageSettings(this@MainActivity)
+                                        },
+                                        onAddTask = {
+                                            currentScreen = AppScreen.EditTask(null)
+                                        },
+                                        onEditTask = { task ->
+                                            currentScreen = AppScreen.EditTask(task)
+                                        },
+                                        onDeleteTask = { task ->
+                                            viewModel.deleteTask(task)
+                                        },
+                                        onToggleTask = { task, enabled ->
+                                            viewModel.toggleTask(task, enabled)
+                                        },
+                                        onRunTaskNow = { task ->
+                                            viewModel.runTaskNow(task)
+                                        }
+                                    )
+
+                                    1 -> LogsScreen(
+                                        logs = logs,
+                                        onClearLogs = { viewModel.clearLogs() }
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

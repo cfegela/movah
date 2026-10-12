@@ -107,4 +107,60 @@ class FileMoverEngineTest {
         assertEquals("FAILED", result.status)
         assertEquals(0, result.itemsMoved)
     }
+
+    @Test
+    fun `test lifecycle rule moves only files older than minAgeDays`() {
+        val oldFile = File(sourceDir, "old.txt").apply {
+            writeText("Old file content")
+            // Set last modified to 3 days ago
+            setLastModified(System.currentTimeMillis() - (3 * 24 * 60 * 60 * 1000L))
+        }
+        val newFile = File(sourceDir, "new.txt").apply {
+            writeText("New file content")
+            setLastModified(System.currentTimeMillis())
+        }
+
+        // Only files older than 2 days should move
+        val result = FileMoverEngine.executeMove(
+            sourcePath = sourceDir.absolutePath,
+            targetPath = targetDir.absolutePath,
+            minAgeDays = 2
+        )
+
+        assertEquals("SUCCESS", result.status)
+        assertEquals(1, result.itemsMoved)
+
+        // Old file moved to target
+        assertFalse(oldFile.exists())
+        assertTrue(File(targetDir, "old.txt").exists())
+
+        // New file retained in source
+        assertTrue(newFile.exists())
+        assertFalse(File(targetDir, "new.txt").exists())
+    }
+
+    @Test
+    fun `test lifecycle rule disabled (0 days) moves all files`() {
+        val oldFile = File(sourceDir, "old.txt").apply {
+            writeText("Old")
+            setLastModified(System.currentTimeMillis() - (5 * 24 * 60 * 60 * 1000L))
+        }
+        val newFile = File(sourceDir, "new.txt").apply {
+            writeText("New")
+            setLastModified(System.currentTimeMillis())
+        }
+
+        val result = FileMoverEngine.executeMove(
+            sourcePath = sourceDir.absolutePath,
+            targetPath = targetDir.absolutePath,
+            minAgeDays = 0
+        )
+
+        assertEquals("SUCCESS", result.status)
+        assertEquals(2, result.itemsMoved)
+        assertFalse(oldFile.exists())
+        assertFalse(newFile.exists())
+        assertTrue(File(targetDir, "old.txt").exists())
+        assertTrue(File(targetDir, "new.txt").exists())
+    }
 }

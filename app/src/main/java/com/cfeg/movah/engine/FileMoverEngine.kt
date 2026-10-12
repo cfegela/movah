@@ -13,7 +13,11 @@ object FileMoverEngine {
         val details: String
     )
 
-    fun executeMove(sourcePath: String, targetPath: String): MoveResult {
+    fun executeMove(
+        sourcePath: String,
+        targetPath: String,
+        minAgeDays: Int = 0
+    ): MoveResult {
         val sourceDir = File(sourcePath.trim())
         val targetDir = File(targetPath.trim())
 
@@ -71,9 +75,21 @@ object FileMoverEngine {
 
         var successCount = 0
         var failCount = 0
+        var skippedCount = 0
         val errorMessages = mutableListOf<String>()
 
+        val now = System.currentTimeMillis()
+        val minAgeMillis = minAgeDays * 24L * 60L * 60L * 1000L
+
         for (item in items) {
+            if (minAgeDays > 0 && item.isFile) {
+                val fileAgeMillis = now - item.lastModified()
+                if (fileAgeMillis < minAgeMillis) {
+                    skippedCount++
+                    continue
+                }
+            }
+
             val destinationItem = File(targetDir, item.name)
 
             try {
@@ -127,6 +143,9 @@ object FileMoverEngine {
 
         val detailsBuilder = StringBuilder()
         detailsBuilder.append("Moved $successCount of ${items.size} item(s).")
+        if (skippedCount > 0) {
+            detailsBuilder.append(" Skipped $skippedCount item(s) (< $minAgeDays day(s) old).")
+        }
         if (errorMessages.isNotEmpty()) {
             detailsBuilder.append(" Errors: ").append(errorMessages.take(5).joinToString("; "))
             if (errorMessages.size > 5) {

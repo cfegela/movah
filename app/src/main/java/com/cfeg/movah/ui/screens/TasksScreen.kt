@@ -251,6 +251,27 @@ private fun TaskCard(
                 }
             }
 
+            // Lifecycle rule info
+            if (task.minAgeDays > 0) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        Icons.Default.HourglassBottom,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.secondary
+                    )
+                    Text(
+                        text = "Lifecycle: Files older than ${task.minAgeDays} ${if (task.minAgeDays == 1) "day" else "days"}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.secondary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
             // Last Run Info
             if (task.lastRunTimestamp != null) {
                 val relativeTime = DateUtils.getRelativeTimeSpanString(

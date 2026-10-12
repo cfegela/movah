@@ -97,7 +97,11 @@ class FileMoverService : Service() {
 
         updateNotification("Moving files: ${task.name}")
 
-        val result = FileMoverEngine.executeMove(task.sourcePath, task.targetPath)
+        val result = FileMoverEngine.executeMove(
+            sourcePath = task.sourcePath,
+            targetPath = task.targetPath,
+            minAgeDays = task.minAgeDays
+        )
 
         // Write log
         val log = MoveLog(
